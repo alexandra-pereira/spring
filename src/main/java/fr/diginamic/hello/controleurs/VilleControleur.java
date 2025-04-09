@@ -1,49 +1,48 @@
 package fr.diginamic.hello.controleurs;
 
-import fr.diginamic.hello.entities.Ville;
-import org.springframework.http.HttpStatus;
+import fr.diginamic.hello.models.Ville;
+import fr.diginamic.hello.services.VilleService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 import org.springframework.validation.BindingResult;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/villes") // URL de base
+@RequestMapping("/villes")
 public class VilleControleur {
 
-    // Liste partagée entre les méthodes GET et POST
-    private List<Ville> villes = new ArrayList<>();
+    private final VilleService villeService;
 
-    public VilleControleur() {
-        // villes initiales
-        villes.add(new Ville(1, "Paris", 2148000));
-        villes.add(new Ville(2, "Lyon", 513000));
+    public VilleControleur(VilleService villeService) {
+        this.villeService = villeService;
     }
 
-    // GET: liste complète
     @GetMapping
-    public List<Ville> getVilles() {
-        return villes;
+    public List<Ville> rechercherToutesLesVilles() {
+        return villeService.rechercherToutesLesVilles();
     }
 
-    // GET: une ville par ID
     @GetMapping("/{id}")
-    public ResponseEntity<Ville> getVilleById(@PathVariable int id) {
-        for (Ville ville : villes) {
-            if (ville.getId() == id) {
-                return ResponseEntity.ok(ville);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public ResponseEntity<Ville> rechercherVilleParId(@PathVariable int id) {
+        Ville ville = villeService.rechercherVilleParId(id);
+        return ville != null ? ResponseEntity.ok(ville) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/nom/{nom}")
+    public ResponseEntity<Ville> rechercherVilleParNom(@PathVariable String nom) {
+        Ville ville = villeService.rechercherVilleParNom(nom);
+        return ville != null ? ResponseEntity.ok(ville) : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/plus-peuplees/{min}")
+    public List<Ville> rechercherVillesLesPlusPeuplees(@PathVariable int min) {
+        return villeService.rechercherVillesLesPlusPeuplees(min);
     }
 
     @PostMapping
-    public ResponseEntity<?> ajouterVille(@Valid @RequestBody Ville nouvelleVille, BindingResult result) {
+    public ResponseEntity<?> insererVille(@Valid @RequestBody Ville ville, BindingResult result) {
         if (result.hasErrors()) {
             List<String> erreurs = result.getFieldErrors().stream()
                     .map(e -> e.getField() + " : " + e.getDefaultMessage())
@@ -51,24 +50,11 @@ public class VilleControleur {
             return ResponseEntity.badRequest().body(erreurs);
         }
 
-        for (Ville ville : villes) {
-            if (ville.getId() == nouvelleVille.getId()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Une ville avec cet ID existe déjà.");
-            }
-        }
-
-        villes.add(nouvelleVille);
-        return ResponseEntity.ok("Ville ajoutée avec succès");
+        return ResponseEntity.ok(villeService.insererVille(ville));
     }
 
-    // PUT: modifier une ville par ID
     @PutMapping("/{id}")
-    public ResponseEntity<?> modifierVille(
-            @PathVariable int id,
-            @Valid @RequestBody Ville villeModifiee,
-            BindingResult result
-    ) {
+    public ResponseEntity<?> modifierVille(@PathVariable int id, @Valid @RequestBody Ville ville, BindingResult result) {
         if (result.hasErrors()) {
             List<String> erreurs = result.getFieldErrors().stream()
                     .map(e -> e.getField() + " : " + e.getDefaultMessage())
@@ -76,30 +62,11 @@ public class VilleControleur {
             return ResponseEntity.badRequest().body(erreurs);
         }
 
-        for (Ville ville : villes) {
-            if (ville.getId() == id) {
-                ville.setNom(villeModifiee.getNom());
-                ville.setNbHabitants(villeModifiee.getNbHabitants());
-                return ResponseEntity.ok("Ville modifiée avec succès");
-            }
-        }
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ville non trouvée");
+        return ResponseEntity.ok(villeService.modifierVille(id, ville));
     }
 
-
-    // DELETE: supprimer une ville par ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> supprimerVille(@PathVariable int id) {
-        Optional<Ville> villeASupprimer = villes.stream()
-                .filter(v -> v.getId() == id)
-                .findFirst();
-
-        if (villeASupprimer.isPresent()) {
-            villes.remove(villeASupprimer.get());
-            return ResponseEntity.ok("Ville supprimée avec succès");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Ville non trouvée");
-        }
+    public ResponseEntity<List<Ville>> supprimerVille(@PathVariable int id) {
+        return ResponseEntity.ok(villeService.supprimerVille(id));
     }
 }

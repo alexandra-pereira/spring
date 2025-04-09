@@ -1,12 +1,15 @@
-package fr.diginamic.hello.entities;
+package fr.diginamic.hello.models;
 
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@Entity
 public class Ville {
 
-    @Min(value = 1, message = "L'id doit être strictement positif.")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @NotNull(message = "Le nom ne peut pas être nul.")
@@ -15,6 +18,11 @@ public class Ville {
 
     @Min(value = 1, message = "Le nombre d'habitants doit être supérieur ou égal à 1.")
     private int nbHabitants;
+
+    @ManyToOne
+    @JoinColumn(name = "departement_id")
+    @NotNull(message = "Le département ne peut pas être nul.")
+    private Departement departement;
 
     public Ville() {}
 
@@ -46,5 +54,13 @@ public class Ville {
 
     public void setNbHabitants(int nbHabitants) {
         this.nbHabitants = nbHabitants;
+    }
+
+    public Departement getDepartement() {
+        return departement;
+    }
+
+    public void setDepartement(Departement departement) {
+        this.departement = departement;
     }
 }
