@@ -22,45 +22,45 @@ public class DepartementControleur {
     // CRUD
 
     @GetMapping
-    public List<Departement> getAll() {
-        return service.getAll();
+    public List<Departement> rechercherTous() {
+        return service.rechercherTous();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Departement> getById(@PathVariable int id) {
-        Departement d = service.getById(id);
+    public ResponseEntity<Departement> rechercherParId(@PathVariable int id) {
+        Departement d = service.rechercherParId(id);
         return d != null ? ResponseEntity.ok(d) : ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public ResponseEntity<Departement> create(@Valid @RequestBody Departement dep) {
-        return ResponseEntity.ok(service.create(dep));
+    public ResponseEntity<Departement> creer(@Valid @RequestBody Departement dep) {
+        return ResponseEntity.ok(service.creer(dep));
     }
 
     @PutMapping
-    public ResponseEntity<Departement> update(@Valid @RequestBody Departement dep) {
-        return ResponseEntity.ok(service.update(dep));
+    public ResponseEntity<Departement> modifier(@Valid @RequestBody Departement dep) {
+        return ResponseEntity.ok(service.modifier(dep));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
-        service.delete(id);
+    public ResponseEntity<Void> supprimer(@PathVariable int id) {
+        service.supprimer(id);
         return ResponseEntity.ok().build();
     }
 
-    // BONUS 1 : villes les + peuplées
+    // BONUS 1 : villes les plus peuplées
     @GetMapping("/{id}/villes-plus-grandes")
-    public List<Ville> getLargestVilles(@PathVariable int id, @RequestParam(defaultValue = "5") int n) {
-        return service.getLargestVilles(id, n);
+    public List<Ville> rechercherVillesPlusPeuplees(@PathVariable int id, @RequestParam(defaultValue = "5") int n) {
+        return service.rechercherVillesPlusPeuplees(id, n);
     }
 
-    // BONUS 2 : villes par tranche de population
+    // BONUS 2 : villes dans une tranche de population
     @GetMapping("/{id}/villes-par-population")
-    public List<Ville> getVillesInPopulationRange(
+    public List<Ville> rechercherVillesParTranchePopulation(
             @PathVariable int id,
             @RequestParam int min,
             @RequestParam int max
     ) {
-        return service.getVillesByPopulationRange(id, min, max);
+        return service.rechercherVillesParTranchePopulation(id, min, max);
     }
 }

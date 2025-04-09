@@ -16,33 +16,33 @@ public class DepartementDao {
     @PersistenceContext
     private EntityManager em;
 
-    public List<Departement> findAll() {
+    public List<Departement> rechercherTous() {
         return em.createQuery("SELECT d FROM Departement d", Departement.class).getResultList();
     }
 
-    public Departement findById(int id) {
+    public Departement rechercherParId(int id) {
         return em.find(Departement.class, id);
     }
 
     @Transactional
-    public Departement insert(Departement dep) {
+    public Departement inserer(Departement dep) {
         em.persist(dep);
         return dep;
     }
 
     @Transactional
-    public Departement update(Departement dep) {
+    public Departement modifier(Departement dep) {
         return em.merge(dep);
     }
 
     @Transactional
-    public void delete(int id) {
+    public void supprimer(int id) {
         Departement dep = em.find(Departement.class, id);
         if (dep != null) em.remove(dep);
     }
 
     // BONUS : villes les plus peuplées
-    public List<Ville> findLargestVilles(int depId, int n) {
+    public List<Ville> rechercherVillesPlusPeuplees(int depId, int n) {
         TypedQuery<Ville> query = em.createQuery(
                 "SELECT v FROM Ville v WHERE v.departement.id = :id ORDER BY v.nbHabitants DESC",
                 Ville.class);
@@ -52,7 +52,7 @@ public class DepartementDao {
     }
 
     // BONUS : villes entre min et max habitants
-    public List<Ville> findVillesByPopulationRange(int depId, int min, int max) {
+    public List<Ville> rechercherVillesParTranchePopulation(int depId, int min, int max) {
         TypedQuery<Ville> query = em.createQuery(
                 "SELECT v FROM Ville v WHERE v.departement.id = :id AND v.nbHabitants BETWEEN :min AND :max",
                 Ville.class);

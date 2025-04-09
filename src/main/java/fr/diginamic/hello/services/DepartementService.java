@@ -16,31 +16,31 @@ public class DepartementService {
         this.departementDao = departementDao;
     }
 
-    public List<Departement> getAll() {
-        return departementDao.findAll();
+    public List<Departement> rechercherTous() {
+        return departementDao.rechercherTous();
     }
 
-    public Departement getById(int id) {
-        return departementDao.findById(id);
+    public Departement rechercherParId(int id) {
+        return departementDao.rechercherParId(id);
     }
 
-    public Departement create(Departement dep) {
-        return departementDao.insert(dep);
+    public Departement creer(Departement dep) {
+        return departementDao.inserer(dep);
     }
 
-    public Departement update(Departement dep) {
-        return departementDao.update(dep);
+    public Departement modifier(Departement dep) {
+        return departementDao.modifier(dep);
     }
 
-    public void delete(int id) {
-        departementDao.delete(id);
+    public void supprimer(int id) {
+        departementDao.supprimer(id);
     }
 
-    public List<Ville> getLargestVilles(int depId, int n) {
-        return departementDao.findLargestVilles(depId, n);
+    public List<Ville> rechercherVillesPlusPeuplees(int depId, int n) {
+        return departementDao.rechercherVillesPlusPeuplees(depId, n);
     }
 
-    public List<Ville> getVillesByPopulationRange(int depId, int min, int max) {
-        return departementDao.findVillesByPopulationRange(depId, min, max);
+    public List<Ville> rechercherVillesParTranchePopulation(int depId, int min, int max) {
+        return departementDao.rechercherVillesParTranchePopulation(depId, min, max);
     }
 }
