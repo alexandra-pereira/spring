@@ -1,5 +1,7 @@
 package fr.diginamic.hello.controleurs;
 
+import fr.diginamic.hello.dto.DepartementDto;
+import fr.diginamic.hello.mappers.DepartementMapper;
 import fr.diginamic.hello.models.Departement;
 import fr.diginamic.hello.models.Ville;
 import fr.diginamic.hello.services.DepartementService;
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/departements")
@@ -19,19 +22,22 @@ public class DepartementControleur {
         this.service = service;
     }
 
-    // CRUD
-
+    // ✅ GET : Afficher les départements (avec total habitants)
     @GetMapping
-    public List<Departement> rechercherTous() {
-        return service.rechercherTous();
+    public List<DepartementDto> rechercherTous() {
+        return service.rechercherTous()
+                .stream()
+                .map(DepartementMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Departement> rechercherParId(@PathVariable int id) {
-        Departement d = service.rechercherParId(id);
-        return d != null ? ResponseEntity.ok(d) : ResponseEntity.notFound().build();
+    public ResponseEntity<DepartementDto> rechercherParId(@PathVariable int id) {
+        Departement dep = service.rechercherParId(id);
+        return dep != null ? ResponseEntity.ok(DepartementMapper.toDto(dep)) : ResponseEntity.notFound().build();
     }
 
+    // ✅ POST, PUT, DELETE : pas besoin de mapper
     @PostMapping
     public ResponseEntity<Departement> creer(@Valid @RequestBody Departement dep) {
         return ResponseEntity.ok(service.creer(dep));
@@ -48,7 +54,7 @@ public class DepartementControleur {
         return ResponseEntity.ok().build();
     }
 
-    // BONUS 1 : villes les plus peuplées
+    // BONUS 1 : villes les + peuplées
     @GetMapping("/{id}/villes-plus-grandes")
     public List<Ville> rechercherVillesPlusPeuplees(@PathVariable int id, @RequestParam(defaultValue = "5") int n) {
         return service.rechercherVillesPlusPeuplees(id, n);
