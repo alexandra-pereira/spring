@@ -21,4 +21,10 @@ public interface VilleRepository extends JpaRepository<Ville, Integer> {
     List<Ville> findByDepartementCodeAndNbHabitantsBetween(String code, int min, int max);
 
     List<Ville> findByDepartementCodeOrderByNbHabitantsDesc(String code, Pageable pageable);
+
+    /**
+     * Permet de vérifier si une ville existe déjà dans un département donné.
+     */
+    boolean existsByNomAndDepartementCode(String nom, String codeDepartement);
+
 }
