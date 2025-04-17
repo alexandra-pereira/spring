@@ -4,15 +4,23 @@ import fr.diginamic.hello.dto.VilleDto;
 import fr.diginamic.hello.mappers.VilleMapper;
 import fr.diginamic.hello.models.Ville;
 import fr.diginamic.hello.services.VilleService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/villes")
@@ -20,11 +28,13 @@ public class VilleControleur {
 
     // ⚠️ on nomme bien le champ "villeService"
     private final VilleService villeService;
+    private final RestTemplate restTemplate;
 
     // ⚠️ et le constructeur prend la même variable
-    public VilleControleur(VilleService villeService) {
+    @Autowired
+    public VilleControleur(VilleService villeService, RestTemplate restTemplate) {
         this.villeService = villeService;
-    }
+        this.restTemplate = restTemplate;    }
 
     @GetMapping
     public Page<VilleDto> rechercherToutesLesVilles(
@@ -135,5 +145,41 @@ public class VilleControleur {
     public ResponseEntity<Void> supprimerVille(@PathVariable int id) {
         villeService.supprimerVille(id);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Export CSV de toutes les villes dont la population ≥ min.
+     */
+    @GetMapping(value = "/export/csv", produces = "text/csv")
+    public void exportCsv(
+            @RequestParam(name = "min") int min,
+            HttpServletResponse response
+    ) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=villes.csv");
+
+        PrintWriter writer = response.getWriter();
+        // En‑tête CSV
+        writer.println("nomVille;nbHabitants;codeDepartement;nomDepartement");
+
+        List<Ville> villes = villeService.rechercherVillesPlusPeuplees(min);
+        for (Ville v : villes) {
+            String codeDept = v.getDepartement().getCode();
+            // Appel API externe pour récupérer le nom du département
+            String url = "https://geo.api.gouv.fr/departements/" + codeDept + "?fields=nom,code,codeRegion";
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dto = restTemplate.getForObject(url, Map.class);
+            String nomDept = dto != null ? (String) dto.get("nom") : "";
+
+            // Écrire la ligne CSV (séparateur ;)
+            writer.printf(
+                    "\"%s\";%d;%s;\"%s\"%n",
+                    v.getNom(),
+                    v.getNbHabitants(),
+                    codeDept,
+                    nomDept
+            );
+        }
+        writer.flush();
     }
 }

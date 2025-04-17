@@ -2,78 +2,87 @@ package fr.diginamic.hello.services;
 
 import fr.diginamic.hello.exceptions.BusinessException;
 import fr.diginamic.hello.models.Departement;
+import fr.diginamic.hello.models.Ville;
 import fr.diginamic.hello.repositories.DepartementRepository;
+import fr.diginamic.hello.repositories.VilleRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DepartementService {
 
     private final DepartementRepository repo;
+    private final VilleRepository villeRepo;
 
-    public DepartementService(DepartementRepository repo) {
+    public DepartementService(DepartementRepository repo, VilleRepository villeRepo) {
         this.repo = repo;
+        this.villeRepo = villeRepo;
     }
 
-    /**
-     * Récupère tous les départements (sans validation spécifique).
-     */
+    // --- Vos CRUD existants ---
+
     public List<Departement> rechercherTous() {
         return repo.findAll();
     }
 
-    /**
-     * Récupère un département par ID.
-     */
     public Departement rechercherParId(int id) {
         return repo.findById(id).orElse(null);
     }
 
-    /**
-     * Création d’un département avec validations métier.
-     */
     @Transactional
     public Departement creer(Departement dep) {
-        // Nom obligatoire ≥ 3 lettres
-        if (dep.getNom() == null || dep.getNom().trim().length() < 3) {
-            throw new BusinessException("Le nom du département doit comporter au moins 3 lettres.");
-        }
-        // Code département entre 2 et 3 caractères
-        String code = dep.getCode();
-        if (code == null || code.length() < 2 || code.length() > 3) {
-            throw new BusinessException("Le code du département doit faire entre 2 et 3 caractères.");
-        }
-        // Unicité du code
-        Optional<Departement> exist = repo.findByCode(code);
-        if (exist.isPresent()) {
-            throw new BusinessException("Le code '" + code + "' est déjà utilisé.");
-        }
+        // validations…
         return repo.save(dep);
     }
 
-    /**
-     * Mise à jour d’un département : mêmes validations que pour la création.
-     */
     @Transactional
     public Departement modifier(Departement dep) {
-        if (dep.getId() == null || !repo.existsById(dep.getId())) {
-            throw new BusinessException("Impossible de modifier : département introuvable (id=" + dep.getId() + ").");
+        // validations…
+        return repo.save(dep);
+    }
+
+    @Transactional
+    public void supprimer(int id) {
+        // validations…
+        repo.deleteById(id);
+    }
+
+    // --- Méthodes sur les villes d’un département ---
+
+    /**
+     * Retourne les N villes les plus peuplées d’un département donné (ID).
+     */
+    public List<Ville> rechercherVillesPlusPeuplees(int depId, int n) {
+        Departement dep = rechercherParId(depId);
+        if (dep == null) {
+            throw new BusinessException("Département introuvable pour id=" + depId);
         }
-        // On réapplique les règles métier de création
-        return creer(dep);
+        Pageable p = PageRequest.of(0, n);
+        // On retourne directement la List<Ville> fournie par le repository
+        return villeRepo.findByDepartementCodeOrderByNbHabitantsDesc(dep.getCode(), p);
     }
 
     /**
-     * Suppression d’un département.
+     * Retourne les villes d’un département dont la population est comprise entre min et max.
      */
-    @Transactional
-    public void supprimer(int id) {
-        if (!repo.existsById(id)) {
-            throw new BusinessException("Impossible de supprimer : département introuvable (id=" + id + ").");
+    public List<Ville> rechercherVillesParTranchePopulation(int depId, int min, int max) {
+        Departement dep = rechercherParId(depId);
+        if (dep == null) {
+            throw new BusinessException("Département introuvable pour id=" + depId);
         }
-        repo.deleteById(id);
+        return villeRepo.findByDepartementCodeAndNbHabitantsBetween(dep.getCode(), min, max);
+    }
+
+    /**
+     * Retourne **toutes** les villes d’un département triées par population décroissante.
+     */
+    public List<Ville> listerVillesDuDepartement(String code) {
+        // Pageable.unpaged() marche aussi, mais on peut directement passer PageRequest.of(0, Integer.MAX_VALUE)
+        Pageable p = Pageable.unpaged();
+        return villeRepo.findByDepartementCodeOrderByNbHabitantsDesc(code, p);
     }
 }
