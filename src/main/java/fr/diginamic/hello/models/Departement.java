@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(name = "departement")
 public class Departement {
 
     @Id
@@ -13,8 +14,12 @@ public class Departement {
 
     private String nom;
 
+    // Le code est la colonne sur laquelle on joint les villes
+    @Column(nullable = false, unique = true)
+    private String code;
+
     @OneToMany(mappedBy = "departement", cascade = CascadeType.ALL)
-    @JsonIgnore // Pour éviter les boucles infinies dans le JSON (Jackson)
+    @JsonIgnore
     private List<Ville> villes;
 
     public Departement() {}
@@ -31,6 +36,10 @@ public class Departement {
     public String getNom() { return nom; }
 
     public void setNom(String nom) { this.nom = nom; }
+
+    public String getCode() { return code; }
+
+    public void setCode(String code) { this.code = code; }
 
     public List<Ville> getVilles() { return villes; }
 

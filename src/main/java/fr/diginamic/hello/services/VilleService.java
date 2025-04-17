@@ -1,7 +1,8 @@
 package fr.diginamic.hello.services;
 
-import fr.diginamic.hello.dao.VilleDao;
 import fr.diginamic.hello.models.Ville;
+import fr.diginamic.hello.repositories.VilleRepository;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,46 +10,60 @@ import java.util.List;
 @Service
 public class VilleService {
 
-    private final VilleDao villeDao;
+    private final VilleRepository repo;
 
-    public VilleService(VilleDao villeDao) {
-        this.villeDao = villeDao;
+    public VilleService(VilleRepository repo) {
+        this.repo = repo;
     }
 
-    public List<Ville> rechercherToutesLesVilles() {
-        return villeDao.rechercherToutesLesVilles();
+    // Pagination de toutes les villes
+    public Page<Ville> rechercherToutesLesVilles(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     public Ville rechercherVilleParId(int id) {
-        return villeDao.rechercherVilleParId(id);
+        return repo.findById(id).orElse(null);
     }
 
     public Ville rechercherVilleParNom(String nom) {
-        return villeDao.rechercherVilleParNom(nom);
+        return repo.findByNom(nom);
     }
 
-    public List<Ville> rechercherVillesLesPlusPeuplees(int minHabitants) {
-        return villeDao.rechercherVillesLesPlusPeuplees(minHabitants);
+    public List<Ville> rechercherVillesCommencantPar(String prefix) {
+        return repo.findByNomStartingWithIgnoreCase(prefix);
     }
 
-    public List<Ville> insererVille(Ville ville) {
-        villeDao.insererVille(ville);
-        return villeDao.rechercherToutesLesVilles();
+    public List<Ville> rechercherVillesPlusPeuplees(int min) {
+        return repo.findByNbHabitantsGreaterThanEqual(min);
     }
 
-    public List<Ville> modifierVille(int id, Ville villeModifiee) {
-        Ville villeExistante = villeDao.rechercherVilleParId(id);
-        if (villeExistante != null) {
-            villeExistante.setNom(villeModifiee.getNom());
-            villeExistante.setNbHabitants(villeModifiee.getNbHabitants());
-            villeExistante.setDepartement(villeModifiee.getDepartement());
-            villeDao.modifierVille(villeExistante);
-        }
-        return villeDao.rechercherToutesLesVilles();
+    public List<Ville> rechercherVillesEntreMinEtMax(int min, int max) {
+        return repo.findByNbHabitantsBetween(min, max);
     }
 
-    public List<Ville> supprimerVille(int id) {
-        villeDao.supprimerVille(id);
-        return villeDao.rechercherToutesLesVilles();
+    public List<Ville> rechercherVillesParDepartementEtMin(String code, int min) {
+        return repo.findByDepartementCodeAndNbHabitantsGreaterThanEqual(code, min);
+    }
+
+    public List<Ville> rechercherVillesParDepartementEtPlage(String code, int min, int max) {
+        return repo.findByDepartementCodeAndNbHabitantsBetween(code, min, max);
+    }
+
+    public List<Ville> rechercherTopNVillesParDepartement(String code, int n) {
+        Pageable p = PageRequest.of(0, n);
+        return repo.findByDepartementCodeOrderByNbHabitantsDesc(code, p);
+    }
+
+    public Ville insererVille(Ville ville) {
+        return repo.save(ville);
+    }
+
+    public Ville modifierVille(int id, Ville ville) {
+        ville.setId(id);
+        return repo.save(ville);
+    }
+
+    public void supprimerVille(int id) {
+        repo.deleteById(id);
     }
 }

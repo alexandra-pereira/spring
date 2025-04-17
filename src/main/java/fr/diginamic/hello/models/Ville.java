@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
+@Table(name = "ville")
 public class Ville {
 
     @Id
@@ -16,13 +17,17 @@ public class Ville {
     @Size(min = 2, message = "Le nom doit contenir au moins 2 caractères.")
     private String nom;
 
-    @Min(value = 1, message = "Le nombre d'habitants doit être supérieur ou égal à 1.")
+    // Dans le script recensement.sql, le champ population s’appelle "population"
+    @Column(name = "population")
+    @Min(value = 1, message = "Le nombre d'habitants doit être ≥ 1.")
     private int nbHabitants;
 
     @ManyToOne
-    @JoinColumn(name = "departement_id")
+    // Dans le script, la colonne étrangère vers departement est sans doute "code_departement"
+    @JoinColumn(name = "code_departement", referencedColumnName = "code")
     @NotNull(message = "Le département ne peut pas être nul.")
     private Departement departement;
+
 
     public Ville() {}
 
